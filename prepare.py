@@ -4,6 +4,11 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 # imputer from sklearn
 from sklearn.impute import SimpleImputer
+from env import get_db_url
+from sklearn.model_selection import train_test_split
+
+import acquire
+import wrangle
 
 #Clean Titanic Data Files:
 
@@ -62,7 +67,7 @@ def prep_iris_data(df):
     train, validate = train_test_split(train, train_size = 0.8, stratify = train.species, random_state = 1234)
     return train, validate, test
 
-    #--------------------------------------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------
 
 #Prepare Telco Data:
 def clean_telco_data(df):
@@ -84,4 +89,34 @@ def prep_telco_data(df):
     train, test = train_test_split(df, train_size = 0.8, stratify = df.churn, random_state = 1234)
     train, validate = train_test_split(train, train_size = 0.8, stratify = train.churn, random_state = 1234)
     return train, validate, test
+
+#--------------------------------------------------------------------------------------------------------------------------------------------
+
+def scale_zillow_data(train, validate, test):
+    
+    '''
+    Takes in train, validate, and test sets, creates copies of those sets, and
+    scales the copies. Returns train_scaled, validate_scaled, and test_scaled 
+    DataFrames.
+    '''
+    
+    #Defining the columns that need to be scaled:
+    scaled_columns = ['bedroomcnt', 'bathroomcnt', 'calculatedfinishedsquarefeet', 'taxvaluedollarcnt']
+    
+    #Creating scalable copies of the train, validate, and test sets:
+    train_scaled = train.copy()
+    validate_scaled = validate.copy()
+    test_scaled = test.copy()
+    
+    #Creating the scaler object:
+    scaler = MinMaxScaler()
+    scaler.fit(train[scaled_columns])
+    
+    #Applying the scaler to the scalable colums within the train, validate, test copies:
+    train_scaled[scaled_columns] = scaler.transform(train[scaled_columns])
+    validate_scaled[scaled_columns] = scaler.transform(validate[scaled_columns])
+    test_scaled[scaled_columns] = scaler.transform(test[scaled_columns])
+
+    #Returning scaled dataframes:
+    return train_scaled, validate_scaled, test_scaled
 
