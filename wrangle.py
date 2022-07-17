@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
 import os
 
 def get_zillow_data():
@@ -51,11 +52,22 @@ def wrangle_zillow():
     df = clearing_fips(df)
     #Drop Null Values:
     df = df.dropna()
-    #Drop listings that have 0.0 bathrooms, 0.0 bedrooms, and are under the 120 sqft legal minimum as required by California to be considered a residence:
-    df = df.drop(df[(df.bedroomcnt == 0.0) & (df.bathroomcnt == 0.0) & (df.calculatedfinishedsquarefeet < 120.0)].index)
+    #Drop listings that have 0.0 bathrooms, 0.0 bedrooms, are under the 120 sqft legal minimum as required by California to be considered a residence, are over 10,000 square feet, or are priced over $2.5 million:
+    df = df.drop(df[(df.bedroomcnt == 0.0) | (df.bathroomcnt == 0.0) | (df.calculatedfinishedsquarefeet < 120.0) | (df.calculatedfinishedsquarefeet > 10000) | (df.taxvaluedollarcnt > 2500000)].index)
     #Converting 'bedroomcnt' and 'yearbuilt' columns to 'int' type:
     df = df.astype({'bedroomcnt' : int, 'yearbuilt': int})
     return df
+
+def split_zillow_data(df):
+    '''
+    Takes in a DataFrame containing the Zillow data, and splits the data into train, validate, and test sets.
+    Returns the train, validate, and test sets.
+    '''
+    #Sets 20% of the data aside as the test set:
+    train_and_validate, test = train_test_split(df, test_size = .2, random_state=456)
+    #Sets 30% of the remaining 80% (24% of the total) aside as the validate set:
+    train, validate = train_test_split(train_and_validate, test_size = .3, random_state = 456)
+    return train, validate, test
 
 def scale_zillow_data(train, validate, test):
     
